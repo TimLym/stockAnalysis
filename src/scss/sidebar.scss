@@ -1,0 +1,229 @@
+@use "_reset.scss" as *;
+
+/* === 側邊欄樣式 === */
+.sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    padding: var(--spacing-lg) var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+    
+    h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        padding: 0 var(--spacing-sm);
+        margin-bottom: var(--spacing-xl);
+        text-align: center;
+        
+        &::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-color), var(--accent-hover));
+            margin: var(--spacing-sm) auto 0;
+            border-radius: 2px;
+        }
+    }
+}
+
+.sidebar-nav {
+    flex: 1;
+    
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    li {
+        button {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            width: 100%;
+            padding: var(--spacing-md) var(--spacing-md);
+            border-radius: var(--border-radius-sm);
+            border: none;
+            background-color: transparent;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            position: relative;
+            
+            &::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 0;
+                height: 24px;
+                background-color: var(--accent-color);
+                border-radius: 0 2px 2px 0;
+                transition: width 0.3s ease;
+            }
+            
+            svg {
+                width: 20px;
+                height: 20px;
+                transition: all 0.3s ease;
+            }
+            
+            .nav-text {
+                transition: all 0.3s ease;
+            }
+            
+            &:hover {
+                background-color: rgba(0, 123, 255, 0.1);
+                color: var(--accent-color);
+                transform: translateX(4px);
+                
+                &::before {
+                    width: 4px;
+                }
+                
+                svg {
+                    transform: scale(1.1);
+                }
+            }
+            
+            &.active {
+                background-color: var(--accent-color);
+                color: white;
+                transform: translateX(4px);
+                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+                
+                &::before {
+                    width: 4px;
+                    background-color: white;
+                }
+                
+                svg {
+                    transform: scale(1.1);
+                }
+                
+                &:hover {
+                    background-color: var(--accent-hover);
+                    transform: translateX(6px);
+                }
+            }
+        }
+    }
+}
+
+/* === 響應式設計 === */
+@media (#{$mediaMax1040}) {
+    .sidebar {
+        width: 80px;
+        padding: var(--spacing-lg) var(--spacing-sm);
+        
+        h1 {
+            font-size: 1rem;
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+            
+            &::after {
+                width: 40px;
+            }
+        }
+        
+        .sidebar-nav {
+            li button {
+                justify-content: center;
+                padding: var(--spacing-md) var(--spacing-sm);
+                
+                .nav-text {
+                    display: none;
+                }
+                
+                svg {
+                    width: 22px;
+                    height: 22px;
+                }
+                
+                &:hover, &.active {
+                    transform: translateX(0);
+                    
+                    &::before {
+                        display: none;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (#{$mediaMax767}) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding: var(--spacing-md) var(--spacing-sm);
+        
+        h1 {
+            display: none;
+        }
+        
+        .sidebar-nav {
+            flex: none;
+            width: 100%;
+            
+            ul {
+                flex-direction: row;
+                justify-content: space-around;
+                gap: var(--spacing-sm);
+            }
+            
+            li {
+                flex: 1;
+                
+                button {
+                    justify-content: center;
+                    flex-direction: column;
+                    gap: var(--spacing-xs);
+                    padding: var(--spacing-sm);
+                    border-radius: var(--border-radius-sm);
+                    min-height: 60px;
+                    
+                    svg {
+                        width: 20px;
+                        height: 20px;
+                    }
+                    
+                    .nav-text {
+                        font-size: 0.75rem;
+                        text-align: center;
+                    }
+                    
+                    &::before {
+                        display: none;
+                    }
+                    
+                    &:hover, &.active {
+                        transform: none;
+                    }
+                    
+                    &.active {
+                        background-color: var(--accent-color);
+                        color: white;
+                    }
+                }
+            }
+        }
+    }
+}

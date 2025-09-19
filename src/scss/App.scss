@@ -1,0 +1,481 @@
+// 引入重置樣式
+@use "./_reset.scss" as *;
+
+/* === 全局變數 === */
+:root {
+    --bg-color: #f8f9fa;
+    --sidebar-bg: #ffffff;
+    --card-bg: #ffffff;
+    --text-color: #343a40;
+    --text-secondary: #6c757d;
+    --border-color: #dee2e6;
+    --accent-color: #007bff;
+    --accent-hover: #0056b3;
+    --color-red: #dc3545;
+    --color-green: #28a745;
+    --color-warning: #ffc107;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 8px 12px rgba(0, 0, 0, 0.07);
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+}
+
+/* === 應用程式專用樣式覆寫 === */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Noto Sans TC', 
+                 -apple-system, BlinkMacSystemFont, 'Segoe UI', 
+                 Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+}
+
+p {
+    margin-bottom: var(--spacing-md);
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+}
+
+/* === 主佈局 === */
+.stock-app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: var(--spacing-lg);
+    overflow-x: hidden;
+    background-color: var(--bg-color);
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-md);
+}
+
+/* === 通用元件樣式 === */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    
+    h2 {
+        margin: 0;
+        color: var(--text-color);
+    }
+}
+
+.header-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.card-container {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow);
+    
+    &:hover {
+        box-shadow: var(--shadow-hover);
+    }
+}
+
+/* === 載入和錯誤狀態 === */
+.loading-message, .error-message, .empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    
+    h2, h3 {
+        color: var(--text-color);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    p {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-sm);
+    }
+}
+
+.error-message {
+    color: var(--color-red);
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: var(--border-radius-sm);
+    
+    h2, h3 {
+        color: #721c24;
+    }
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+    color: var(--text-secondary);
+}
+
+/* === 按鈕樣式 === */
+.btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    text-decoration: none;
+    
+    &.btn-primary {
+        background-color: var(--accent-color);
+        color: white;
+        
+        &:hover {
+            background-color: var(--accent-hover);
+        }
+    }
+    
+    &.btn-outline {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        
+        &:hover {
+            background-color: var(--bg-color);
+        }
+    }
+}
+
+.add-stock-btn {
+    @extend .btn;
+    @extend .btn-primary;
+}
+
+.chart-button {
+    @extend .btn;
+    @extend .btn-outline;
+}
+
+/* === 表單樣式 === */
+.add-stock-form {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    
+    input {
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-sm);
+        font-size: 14px;
+        min-width: 150px;
+        
+        &:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        &::placeholder {
+            color: var(--text-secondary);
+        }
+    }
+    
+    button {
+        @extend .btn;
+        padding: var(--spacing-sm) var(--spacing-md);
+        
+        &:first-of-type {
+            @extend .btn-primary;
+        }
+        
+        &:last-of-type {
+            background-color: var(--text-secondary);
+            color: white;
+            
+            &:hover {
+                background-color: #5a6268;
+            }
+        }
+    }
+}
+
+/* === 響應式設計 === */
+@media (#{$mediaMax1200}) {
+    .main-content {
+        padding: var(--spacing-md);
+    }
+    
+    .page-container {
+        padding: var(--spacing-sm);
+    }
+}
+
+@media (#{$mediaMax767}) {
+    .stock-app-layout {
+        flex-direction: column;
+    }
+    
+    .main-content {
+        padding: var(--spacing-md);
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+    
+    .header-controls {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .add-stock-form {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        
+        input {
+            min-width: auto;
+        }
+    }
+}
+
+/* === 主佈局 === */
+.stock-app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: var(--spacing-lg);
+    overflow-x: hidden;
+    background-color: var(--bg-color);
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-md);
+}
+
+/* === 通用元件樣式 === */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    
+    h2 {
+        margin: 0;
+        color: var(--text-color);
+    }
+}
+
+.header-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.card-container {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow);
+    
+    &:hover {
+        box-shadow: var(--shadow-hover);
+    }
+}
+
+/* === 載入和錯誤狀態 === */
+.loading-message, .error-message, .empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    
+    h2, h3 {
+        color: var(--text-color);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    p {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-sm);
+    }
+}
+
+.error-message {
+    color: var(--color-red);
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: var(--border-radius-sm);
+    
+    h2, h3 {
+        color: #721c24;
+    }
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+    color: var(--text-secondary);
+}
+
+/* === 按鈕樣式 === */
+.btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    text-decoration: none;
+    
+    &.btn-primary {
+        background-color: var(--accent-color);
+        color: white;
+        
+        &:hover {
+            background-color: var(--accent-hover);
+        }
+    }
+    
+    &.btn-outline {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        
+        &:hover {
+            background-color: var(--bg-color);
+        }
+    }
+}
+
+.add-stock-btn {
+    @extend .btn;
+    @extend .btn-primary;
+}
+
+.chart-button {
+    @extend .btn;
+    @extend .btn-outline;
+}
+
+/* === 表單樣式 === */
+.add-stock-form {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    
+    input {
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-sm);
+        font-size: 14px;
+        min-width: 150px;
+        
+        &:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        &::placeholder {
+            color: var(--text-secondary);
+        }
+    }
+    
+    button {
+        @extend .btn;
+        padding: var(--spacing-sm) var(--spacing-md);
+        
+        &:first-of-type {
+            @extend .btn-primary;
+        }
+        
+        &:last-of-type {
+            background-color: var(--text-secondary);
+            color: white;
+            
+            &:hover {
+                background-color: #5a6268;
+            }
+        }
+    }
+}
+
+/* === 響應式設計 === */
+@media (max-width: 1200px) {
+    .main-content {
+        padding: var(--spacing-md);
+    }
+    
+    .page-container {
+        padding: var(--spacing-sm);
+    }
+}
+
+@media (max-width: 768px) {
+    .stock-app-layout {
+        flex-direction: column;
+    }
+    
+    .main-content {
+        padding: var(--spacing-md);
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+    
+    .header-controls {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .add-stock-form {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        
+        input {
+            min-width: auto;
+        }
+    }
+}

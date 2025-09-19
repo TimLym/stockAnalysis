@@ -1,0 +1,168 @@
+@charset "UTF-8";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC&Playfair+Display&family=Abril+Fatface:wght@300;400;500;700&display=swap');
+
+
+// extends
+// 多行省略
+%multiple-lines {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+
+// 單行省略
+%single-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+// RWD
+$mediaMax450: "max-width:451px";
+$mediaMax767: "max-width:769px";
+$mediaMax1040: "max-width:1040px";
+$mediaMax1200: "max-width:1200px";
+
+
+* {
+    box-sizing: border-box; //不累加內距及邊框 
+}
+
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+    margin: 0;
+    padding: 0;
+    font-size: 100%;
+}
+
+/* 重置字體 */
+body {
+    /* 需要引號("")的字體名稱：含有空格or含有中文 
+       不需要引號("")的字體名稱：單一英文字、有(-)隔開
+       或全部都加引號 */
+    font-family:
+        /*英文*/
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial,
+        /*中文*/
+        "蘋方-繁", "PingFang TC", "黑體-繁", "Heiti TC", "微軟正黑體", "Microsoft JhengHei", sans-serif;
+    font-size: 100%;
+    line-height: 1.5;
+}
+
+/* 重置標題 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: normal;
+}
+
+/* 重置列表 */
+ul,
+ol {
+    list-style: none;
+}
+
+/* 重置圖片 */
+img {
+    display: block;
+    width: 100%;
+}
+
+/* 重置連結 */
+a {
+    display: block;
+    /*常用來設定尺寸，所以直接inline修改為block (inline不支援尺寸設定)*/
+    color: black;
+    text-decoration: none;
+    /*a(連結)的底線設定none*/
+}
+
+/* 重置按鈕 */
+button {
+    margin: 0;
+    padding: 0;
+}
+
+/* reset end */
