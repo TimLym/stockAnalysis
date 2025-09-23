@@ -1,12 +1,48 @@
-# React + Vite
+# StockAnalysis - 台股資訊平台
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一個基於 React 和 SCSS 開發的現代化股票資訊應用程式，專為台灣證券市場設計。
+目前進度：找尋可提供即時股價整合k線圖的解決方案。
 
-Currently, two official plugins are available:
+## 功能特色
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **即時股票資訊** - 整合台灣證交所 API，提供即時股價資料
+- **股票觀察清單** - 可新增、刪除和管理個人關注的股票
+- **互動式圖表** - 整合 TradingView 提供專業級股票圖表
+- **財經新聞** - 顯示最新財經和科技新聞（利用 GNews API）
+- **響應式設計** - 支援桌面、平板和手機等多種裝置
 
-## Expanding the ESLint configuration
+## 技術架構
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 前端技術
+- **React** - 使用 Hooks 進行狀態管理
+- **SCSS** - 模組化樣式管理
+- **TradingView** - 專業圖表工具
+
+### API 整合
+- **台灣證交所 API** - 獲取即時股票資料
+- **GNews API** - 財經、科技新聞
+
+### 主要功能
+
+1. **觀察清單管理**
+   - 點擊「新增」按鈕添加股票代號（例如：2330）
+   - 點擊股票卡片右上角的選單可刪除股票
+   - 支援左右滑動瀏覽股票列表
+
+2. **股票資訊查看**
+   - 點擊股票卡片查看詳細資訊
+   - 顯示當日行情數據（開盤、收盤、最高、最低等）
+   - 整合 TradingView 圖表
+
+3. **進階圖表**
+   - 點擊「切換至全螢幕圖表」進入圖表頁面
+   - 提供完整的技術分析工具
+
+4. **新聞瀏覽**
+   - 瀏覽最新財經和科技新聞
+   - 點擊新聞卡片開啟原文連結
+
+### 支援的股票代號格式
+
+- 四位數字：`2330`（自動轉換為 2330.TW）
+- 完整格式：`2330.TW`
