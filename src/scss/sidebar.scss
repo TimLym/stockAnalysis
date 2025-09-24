@@ -1,8 +1,7 @@
 @use "_reset.scss" as *;
 
 /* === 側邊欄樣式 === */
-.sidebar {
-    width: 280px;
+.sidebar {    
     flex-shrink: 0;
     background-color: var(--sidebar-bg);
     border-right: 1px solid var(--border-color);
@@ -10,14 +9,61 @@
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow);
+    transition: width 0.3s ease, padding 0.3s ease;
+    position: relative;
     
-    h1 {
+    &.sidebar-collapsed {        
+        min-width: 80px;
+        max-width: 80px;
+        padding: var(--spacing-lg) var(--spacing-sm);
+        
+        .sidebar-header {
+            .sidebar-title {
+                font-size: 1.2rem;
+                margin-bottom: var(--spacing-md);
+            }
+        }
+        
+        .sidebar-nav {
+            li button {
+                justify-content: center;
+                padding: var(--spacing-md) var(--spacing-sm);
+                
+                .nav-text {
+                    display: none;
+                }
+                
+                svg {
+                    width: 22px;
+                    height: 22px;
+                }
+                
+                &:hover, &.active {
+                    transform: none;
+                    
+                    &::before {
+                        display: none;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    
+    .sidebar-title {
         font-size: 1.75rem;
         font-weight: 700;
         color: var(--accent-color);
-        padding: 0 var(--spacing-sm);
-        margin-bottom: var(--spacing-xl);
+        margin: 0;
         text-align: center;
+        flex: 1;
+        transition: all 0.3s ease;
         
         &::after {
             content: '';
@@ -27,6 +73,45 @@
             background: linear-gradient(90deg, var(--accent-color), var(--accent-hover));
             margin: var(--spacing-sm) auto 0;
             border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+    }
+    
+    .sidebar-toggle {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: var(--spacing-xs);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        position: absolute;
+        right: var(--spacing-sm);
+        top: 50%;
+        transform: translateY(-50%);
+        
+        &:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+            color: var(--accent-color);
+        }
+        
+        svg {
+            transition: transform 0.3s ease;
+        }
+    }
+}
+
+.sidebar-collapsed .sidebar-header {
+    .sidebar-title::after {
+        width: 30px;
+    }
+    
+    .sidebar-toggle {
+        svg {
+            transform: rotate(180deg);
         }
     }
 }

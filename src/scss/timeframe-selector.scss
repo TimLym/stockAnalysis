@@ -1,0 +1,61 @@
+/* 時間框架選擇器樣式 */
+.timeframe-selector {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 123, 255, 0.05);
+    border-radius: 6px;
+    padding: 4px;
+    border: 1px solid rgba(0, 123, 255, 0.1);
+}
+
+.timeframe-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    
+    &:hover {
+        background: rgba(0, 123, 255, 0.1);
+        color: var(--accent-color);
+    }
+    
+    &.active {
+        background: var(--accent-color);
+        color: white;
+        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+        
+        &:hover {
+            background: var(--accent-hover);
+        }
+    }
+    
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        
+        &:hover {
+            background: transparent;
+            color: var(--text-secondary);
+        }
+    }
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .timeframe-selector {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .timeframe-btn {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        min-width: 50px;
+    }
+}

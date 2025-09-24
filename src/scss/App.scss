@@ -1,5 +1,6 @@
 // 引入重置樣式
 @use "./_reset.scss" as *;
+@use "./timeframe-selector.scss" as *;
 
 /* === 全局變數 === */
 :root {
@@ -63,16 +64,28 @@ button {
 }
 
 .main-content {
-    flex-grow: 1;
+    flex: 1;
+    width: 80vw; /* 保持固定寬度，sidebar 280px */
+    min-width: 0;
     padding: var(--spacing-lg);
     overflow-x: hidden;
     background-color: var(--bg-color);
+    min-height: 100vh;
+    transition: width 0.3s ease;
+    transition: width 0.3s ease;
+}
+
+/* 當 sidebar 收合時，調整 main-content 寬度 */
+.sidebar-collapsed + .main-content {
+    width: calc(100% - 80px); /* 收合後的 sidebar 寬度 */
 }
 
 .page-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: var(--spacing-md);
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    height: 100%;
 }
 
 /* === 通用元件樣式 === */
@@ -268,24 +281,6 @@ button {
     }
 }
 
-/* === 主佈局 === */
-.stock-app-layout {
-    display: flex;
-    min-height: 100vh;
-}
-
-.main-content {
-    flex-grow: 1;
-    padding: var(--spacing-lg);
-    overflow-x: hidden;
-    background-color: var(--bg-color);
-}
-
-.page-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: var(--spacing-md);
-}
 
 /* === 通用元件樣式 === */
 .section-header {
