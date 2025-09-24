@@ -3,7 +3,7 @@ import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
 import ChartPage from './pages/ChartPage';
 import NewsPage from './pages/NewsPage';
-import { twseApi } from './services/api';
+import { stockApi } from './services/api';
 import './scss/App.scss';
 
 // 預設觀察名單
@@ -53,17 +53,23 @@ export default function App() {
 
             try {
                 setError(null);
-                const data = await twseApi.getQuotes(watchlist);
+                console.log('開始獲取觀察名單數據:', watchlist);
                 
-                if (data && data.msgArray) {
+                // 使用 stockApi.getQuotes 批量獲取數據
+                const data = await stockApi.getQuotes(watchlist);
+                
+                if (data && data.msgArray && Array.isArray(data.msgArray)) {
                     const newData = data.msgArray.reduce((acc, stock) => {
                         const symbol = `${stock.c}.TW`;
                         acc[symbol] = stock;
                         return acc;
                     }, {});
-                    setStockData(prevData => ({ ...prevData, ...newData }));
+                    
+                    console.log('成功獲取股票數據:', Object.keys(newData).length, '檔');
+                    setStockData(newData);
                 } else {
-                    console.warn('沒有收到股票資料');
+                    console.warn('未獲取到有效的股票數據');
+                    setStockData({});
                 }
             } catch (err) {
                 console.error("獲取股票資料失敗:", err);
@@ -74,8 +80,8 @@ export default function App() {
         };
         
         fetchData();
-        // const intervalId = setInterval(fetchData, 30000); // 每30秒更新
-        // return () => clearInterval(intervalId);
+        const intervalId = setInterval(fetchData, 15000); // 每30秒更新
+        return () => clearInterval(intervalId);
     }, [watchlist]);
 
     // 保存觀察清單到 localStorage
