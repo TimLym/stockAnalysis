@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChartIcon } from './Icons';
-import TradingViewSymbolInfo from './TradingViewSymbolInfo';
+import SimpleStockChart from './SimpleStockChart';
 import FinancialsInfo from './FinancialsInfo';
 
 const StockInfo = ({ symbol, data, onNavigateToChart }) => {
@@ -30,8 +30,27 @@ const StockInfo = ({ symbol, data, onNavigateToChart }) => {
                             <ChartIcon /> 切換至全螢幕圖表
                         </button>
                     </div>
-                    <div className="chart-wrapper">
-                        <TradingViewSymbolInfo key={symbol} symbol={symbol} />
+                    <div 
+                        className="chart-wrapper"
+                        style={{
+                            minHeight: '450px',
+                            height: '450px', // 固定高度
+                            overflow: 'hidden', // 防止溢出
+                            padding: '10px',
+                            position: 'relative',
+                            border: '1px solid #333',
+                            borderRadius: '8px',
+                            backgroundColor: '#1e1e1e',
+                            width: '100%', // 確保寬度填滿父容器
+                            maxWidth: '100%', // 防止超出父容器
+                            boxSizing: 'border-box' // 包含padding和border在內的寬度計算
+                        }}
+                    >
+                        <SimpleStockChart 
+                            symbol={symbol}
+                            data={data}
+                            height={400}
+                        />
                     </div>
                 </div>
                 
