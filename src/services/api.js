@@ -1,105 +1,257 @@
 // API 服務模組
+import { generateRealisticKlineData, generateMockNews, generateMockQuoteData } from './mockData.js';
+import { fugleApi, fugleApiSecondary } from './fugleApi.js';
 
-// 使用多個 CORS 代理，提高成功率
+// 使用穩定的 CORS 代理服務
 const CORS_PROXIES = [
-    'https://api.allorigins.win/raw?url=',
-    'https://cors-anywhere.herokuapp.com/',
-    'https://corsproxy.io/?'
+    'https://api.allorigins.win/get?url=',
+    'https://corsproxy.io/?',
+    'https://cors-anywhere.herokuapp.com/'
 ];
 
 let currentProxyIndex = 0;
 
-// 重試機制
-const fetchWithRetry = async (url, retries = 3) => {
-    for (let i = 0; i < retries; i++) {
+// 網路請求重試函數
+const fetchWithProxy = async (url, options = {}, retries = 2) => {
+    let lastError;
+    
+    for (let attempt = 0; attempt < retries; attempt++) {
+        const proxyUrl = `${CORS_PROXIES[currentProxyIndex]}${encodeURIComponent(url)}`;
+        
         try {
-            const response = await fetch(url);
+            console.log(`嘗試 ${attempt + 1}/${retries}: 使用代理 ${currentProxyIndex + 1}`);
+            
+            const response = await fetch(proxyUrl, {
+                ...options,
+                headers: {
+                    'Accept': 'application/json',
+                    ...options.headers
+                }
+            });
+            
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            return response;
-        } catch (error) {
-            console.warn(`第 ${i + 1} 次嘗試失敗:`, error.message);
-            if (i === retries - 1) throw error;
             
-            // 嘗試下一個代理
-            currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-    }
-};
-
-// TWSE API 服務
-export const twseApi = {
-    getQuotes: async (symbols) => {
-        // 篩選出台股代號
-        const twSymbols = symbols.filter(s => s.endsWith('.TW'));
-        if (twSymbols.length === 0) {
-            return { msgArray: [] };
-        }
-        
-        // 組合 TWSE API 查詢字串
-        const query = twSymbols.map(s => `tse_${s.replace('.TW', '')}.tw`).join('|');
-        const timestamp = new Date().getTime();
-        
-        const targetUrl = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${query}&json=1&delay=0&_=${timestamp}`;
-        
-        // 嘗試使用當前代理
-        const proxyUrl = `${CORS_PROXIES[currentProxyIndex]}${encodeURIComponent(targetUrl)}`;
-        
-        try {
-            const response = await fetchWithRetry(proxyUrl);
-            const data = await response.json();
+            let data;
+            const contentType = response.headers.get('content-type');
             
-            // 檢查回傳的資料格式
-            if (!data.msgArray || data.msgArray.length === 0) {
-                throw new Error('沒有收到股票資料');
+            if (CORS_PROXIES[currentProxyIndex].includes('allorigins')) {
+                const result = await response.json();
+                data = typeof result.contents === 'string' ? JSON.parse(result.contents) : result.contents;
+            } else {
+                data = await response.json();
             }
             
+            console.log('API 請求成功');
             return data;
+            
         } catch (error) {
-            console.error('TWSE API 錯誤:', error);
-            throw new Error(`無法獲取股票資料: ${error.message}`);
+            lastError = error;
+            console.warn(`代理 ${currentProxyIndex + 1} 失敗:`, error.message);
+            
+            // 切換到下一個代理
+            currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
+            
+            if (attempt < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
         }
     }
+    
+    throw new Error(`所有代理都失敗了: ${lastError?.message || '未知錯誤'}`);
 };
 
 // GNews API 服務
 export const gnewsApi = {
     getNews: async (category) => {
-        const API_KEY = '675e97b70e60602a50d9dfb83d3b5851';         
+        const API_KEY = '675e97b70e60602a50d9dfb83d3b5851';
+        
         try {
-            const response = await fetch(
-                `https://gnews.io/api/v4/top-headlines?category=${category}&lang=zh&country=tw&max=10&apikey=${API_KEY}`
-            );
+            console.log(`正在獲取 ${category} 類別的新聞...`);
             
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            const url = `https://gnews.io/api/v4/top-headlines?category=${category}&lang=zh&country=tw&max=10&apikey=${API_KEY}`;
+            const data = await fetchWithProxy(url);
+            
+            if (!data || !data.articles) {
+                throw new Error('無效的新聞數據格式');
             }
             
-            return await response.json();
+            console.log('新聞數據獲取成功:', data.totalArticles, '篇文章');
+            return data;
+            
         } catch (error) {
             console.error('GNews API 錯誤:', error);
-            throw error;
+            console.warn('使用備用模擬新聞數據');
+            
+            // 使用備用模擬數據
+            return generateMockNews(category);
         }
     }
 };
 
-// 格式化股票代號給 TradingView 使用
-export const formatSymbolForTradingView = (symbol) => {
-    if (!symbol) return null;
+// 股票數據 API 服務 - 優先使用富果 API
+export const stockApi = {
+    // 獲取股票歷史數據 - 支援多時間框架
+    getHistoricalData: async (symbol, days = 30, timeframe = 'D') => {
+        const stockCode = symbol.replace('.TW', '');
+        console.log(`正在獲取 ${stockCode} 的 ${timeframe} 歷史數據，請求天數: ${days}`);
+        
+        // 方法 1: 富果 API（支援 5分K、30分K、日K、週K、月K）
+        try {
+            const fugleData = await fugleApi.getHistoricalData(symbol, days, timeframe);
+            if (fugleData && fugleData.length > 0) {
+                console.log(`富果 API: 成功獲取 ${fugleData.length} 筆 ${timeframe} K 線數據`);
+                console.log(`富果數據時間範圍: ${fugleData[0].x.toLocaleDateString('zh-TW')} 到 ${fugleData[fugleData.length-1].x.toLocaleDateString('zh-TW')}`);
+                return fugleData;
+            }
+        } catch (fugleError) {
+            console.warn('富果 API 失敗，嘗試第二個 token:', fugleError.message);
+        }
+        
+        // 方法 2: 富果 API 第二個 token - 備用方案（支援所有時間框架）
+        try {
+            const fugleDataSecondary = await fugleApiSecondary.getHistoricalData(symbol, days, timeframe);
+            if (fugleDataSecondary && fugleDataSecondary.length > 0) {
+                console.log(`富果 API（第二個 token）: 成功獲取 ${fugleDataSecondary.length} 筆 ${timeframe} K 線數據`);
+                console.log(`富果數據時間範圍: ${fugleDataSecondary[0].x.toLocaleDateString('zh-TW')} 到 ${fugleDataSecondary[fugleDataSecondary.length-1].x.toLocaleDateString('zh-TW')}`);
+                return fugleDataSecondary;
+            }
+        } catch (fugleErrorSecondary) {
+            console.warn('富果 API（第二個 token）失敗，嘗試 Yahoo Finance:', fugleErrorSecondary.message);
+        }
+        
+        // 方法 3: Yahoo Finance - 備用方案 (僅支援日K)
+        if (timeframe === 'D' || timeframe === '1D') {
+            try {
+                // 使用台灣時區的當前時間
+                const now = new Date();
+                const taiwanTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
+                const endDate = Math.floor(taiwanTime.getTime() / 1000);
+                const startDate = endDate - (days * 24 * 60 * 60);
+                
+                console.log(`Yahoo Finance 請求時間範圍: ${new Date(startDate * 1000).toLocaleDateString('zh-TW')} 到 ${new Date(endDate * 1000).toLocaleDateString('zh-TW')}`);
+                
+                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${stockCode}.TW?period1=${startDate}&period2=${endDate}&interval=1d&includePrePost=true&events=div%7Csplit`;
+                const data = await fetchWithProxy(yahooUrl);
+                
+                if (data?.chart?.result?.[0]) {
+                    const result = data.chart.result[0];
+                    const timestamps = result.timestamp;
+                    const quote = result.indicators.quote[0];
+                    if (timestamps && quote) {
+                        const klineData = timestamps.map((timestamp, index) => ({
+                            x: new Date(timestamp * 1000),
+                            o: parseFloat((quote.open[index] || 0).toFixed(2)),
+                            h: parseFloat((quote.high[index] || 0).toFixed(2)),
+                            l: parseFloat((quote.low[index] || 0).toFixed(2)),
+                            c: parseFloat((quote.close[index] || 0).toFixed(2)),
+                            v: parseInt(quote.volume[index] || 0) // 保持原始成交量數據
+                        })).filter(item => item.o > 0 && item.h > 0 && item.l > 0 && item.c > 0);
+                        
+                        if (klineData.length > 0) {
+                            console.log(`Yahoo Finance: 成功獲取 ${klineData.length} 筆日K數據`);
+                            console.log(`數據時間範圍: ${klineData[0].x.toLocaleDateString('zh-TW')} 到 ${klineData[klineData.length-1].x.toLocaleDateString('zh-TW')}`);
+                            return klineData;
+                        }
+                    }
+                }
+            } catch (yahooError) {
+                console.warn('Yahoo Finance 失敗:', yahooError.message);
+            }
+        } else {
+            // 對於非日K線（5分K、30分K、週K、月K），當富果API都失敗時，直接使用模擬數據
+            console.warn(`富果API對 ${timeframe} 時間框架失敗，Yahoo Finance不支援此時間框架，使用模擬數據`);
+        }
+        
+        // 方法 4: 使用模擬數據作為最後備用方案
+        console.warn(`所有 API 都失敗，使用模擬數據作為 ${stockCode} 的備用方案`);
+        return generateRealisticKlineData(symbol, days, timeframe);
+    },
     
-    // 台股處理
-    if (symbol.includes('.TW')) {
-      const code = symbol.replace('.TW', '');
-      return `TWSE:${code}`;
+    // 獲取即時報價 - 優先使用富果 API
+    getQuotes: async (symbols) => {
+        const twSymbols = symbols.filter(s => s.endsWith('.TW'));
+        if (twSymbols.length === 0) {
+            return { msgArray: [] };
+        }
+        
+        console.log('正在獲取即時報價...');
+        
+        // 方法 1: 優先嘗試富果 API
+        try {
+            const fugleQuotes = await fugleApi.getQuotes(twSymbols);
+            if (fugleQuotes.msgArray && fugleQuotes.msgArray.length > 0) {
+                console.log(`富果 API: 成功獲取 ${fugleQuotes.msgArray.length} 檔股票報價`);
+                return fugleQuotes;
+            }
+        } catch (fugleError) {
+            console.warn('富果 API 報價獲取失敗，嘗試第二個 token:', fugleError.message);
+        }
+        
+        // 方法 2: 富果 API 第二個 token - 備用方案
+        try {
+            const fugleQuotesSecondary = await fugleApiSecondary.getQuotes(twSymbols);
+            if (fugleQuotesSecondary.msgArray && fugleQuotesSecondary.msgArray.length > 0) {
+                console.log(`富果 API（第二個 token）: 成功獲取 ${fugleQuotesSecondary.msgArray.length} 檔股票報價`);
+                return fugleQuotesSecondary;
+            }
+        } catch (fugleErrorSecondary) {
+            console.warn('富果 API（第二個 token）報價獲取失敗，嘗試 Yahoo Finance:', fugleErrorSecondary.message);
+        }
+        
+        // 方法 3: 備用方案 - Yahoo Finance
+        try {
+            const quotes = [];
+            for (const symbol of twSymbols) {
+                try {
+                    const stockCode = symbol.replace('.TW', '');
+                    const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
+                    const data = await fetchWithProxy(yahooUrl);
+                    
+                    if (data?.quoteResponse?.result?.[0]) {
+                        const quote = data.quoteResponse.result[0];
+                        // 使用 API 返回的股票名稱
+                        const stockName = quote.longName || quote.shortName || quote.symbol;
+                        
+                        quotes.push({
+                            c: stockCode,
+                            n: stockName,
+                            z: (quote.regularMarketPrice || 0).toFixed(2),
+                            tv: quote.regularMarketVolume || 0,
+                            o: (quote.regularMarketOpen || 0).toFixed(2),
+                            h: (quote.regularMarketDayHigh || 0).toFixed(2),
+                            l: (quote.regularMarketDayLow || 0).toFixed(2),
+                            y: (quote.regularMarketPreviousClose || 0).toFixed(2)
+                        });
+                    }
+                } catch (quoteError) {
+                    console.warn(`獲取 ${symbol} 報價失敗:`, quoteError.message);
+                }
+            }
+            
+            if (quotes.length > 0) {
+                console.log(`Yahoo Finance: 成功獲取 ${quotes.length} 檔股票報價`);
+                return {
+                    msgArray: quotes,
+                    queryTime: {
+                        sysTime: new Date().toLocaleTimeString('zh-TW'),
+                        stockInfoItem: Date.now()
+                    }
+                };
+            }
+        } catch (error) {
+            console.error('Yahoo Finance 報價獲取失敗:', error);
+        }
+        
+        // 方法 4: 使用模擬數據作為備用方案
+        console.warn('使用模擬數據作為即時報價的備用方案');
+        return generateMockQuoteData(twSymbols);
     }
-    
-    // 美股處理
-    if (symbol.match(/^[A-Z]+$/)) {
-      return `NASDAQ:${symbol}`;
-    }
-    
-    // 其他交易所
-    return symbol;
-  };
+};
+
+// 為了向後相容，保留 twseApi 別名
+export const twseApi = {
+    getHistoricalData: stockApi.getHistoricalData,
+    getQuotes: stockApi.getQuotes
+};
