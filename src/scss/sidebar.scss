@@ -1,16 +1,24 @@
 @use "_reset.scss" as *;
 
-/* === 側邊欄樣式 === */
+/* === 側邊欄樣式 - 淺藍色主題 === */
 .sidebar {    
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
     flex-shrink: 0;
-    background-color: var(--sidebar-bg);
-    border-right: 1px solid var(--border-color);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--primary-200);
     padding: var(--spacing-lg) var(--spacing-md);
     display: flex;
     flex-direction: column;
-    box-shadow: var(--shadow);
-    transition: width 0.3s ease, padding 0.3s ease;
-    position: relative;
+    box-shadow: var(--shadow), 4px 0 15px rgba(14, 165, 233, 0.05);
+    transition: all var(--transition-normal);
+    min-width: 280px;
+    max-width: 280px;
+    overflow-y: auto; /* 添加垂直滾動 */
     
     &.sidebar-collapsed {        
         min-width: 80px;
@@ -39,7 +47,7 @@
                 }
                 
                 &:hover, &.active {
-                    transform: none;
+                    transform: scale(1.05);
                     
                     &::before {
                         display: none;
@@ -59,47 +67,56 @@
     .sidebar-title {
         font-size: 1.75rem;
         font-weight: 700;
-        color: var(--accent-color);
+        background: linear-gradient(135deg, var(--primary-600), var(--accent-500));
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         margin: 0;
         text-align: center;
         flex: 1;
-        transition: all 0.3s ease;
+        transition: all var(--transition-normal);
         
         &::after {
             content: '';
             display: block;
             width: 60px;
             height: 3px;
-            background: linear-gradient(90deg, var(--accent-color), var(--accent-hover));
+            background: linear-gradient(90deg, var(--primary-400), var(--accent-400));
             margin: var(--spacing-sm) auto 0;
             border-radius: 2px;
-            transition: width 0.3s ease;
+            transition: width var(--transition-normal);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
         }
     }
     
     .sidebar-toggle {
-        background: none;
-        border: none;
-        color: var(--text-secondary);
+        background: linear-gradient(135deg, var(--primary-100), rgba(255, 255, 255, 0.8));
+        border: 2px solid var(--primary-300);
+        color: var(--primary-600);
         cursor: pointer;
         padding: var(--spacing-xs);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
+        transition: all var(--transition-normal);
         position: absolute;
         right: var(--spacing-sm);
         top: 50%;
         transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
         
         &:hover {
-            background-color: rgba(0, 123, 255, 0.1);
-            color: var(--accent-color);
+            background: linear-gradient(135deg, var(--accent-200), var(--accent-300));
+            border-color: var(--accent-400);
+            color: var(--primary-800);
+            box-shadow: var(--shadow-accent);
+            transform: translateY(-50%) scale(1.1);
         }
         
         svg {
-            transition: transform 0.3s ease;
+            transition: transform var(--transition-normal);
         }
     }
 }
@@ -134,15 +151,15 @@
             align-items: center;
             gap: var(--spacing-md);
             width: 100%;
-            padding: var(--spacing-md) var(--spacing-md);
+            padding: var(--spacing-md);
             border-radius: var(--border-radius-sm);
             border: none;
-            background-color: transparent;
+            background: transparent;
             color: var(--text-secondary);
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all var(--transition-normal);
             text-align: left;
             position: relative;
             
@@ -154,24 +171,25 @@
                 transform: translateY(-50%);
                 width: 0;
                 height: 24px;
-                background-color: var(--accent-color);
-                border-radius: 0 2px 2px 0;
-                transition: width 0.3s ease;
+                background: linear-gradient(135deg, var(--primary-400), var(--accent-400));
+                border-radius: 0 12px 12px 0;
+                transition: width var(--transition-normal);
+                box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
             }
             
             svg {
                 width: 20px;
                 height: 20px;
-                transition: all 0.3s ease;
+                transition: all var(--transition-normal);
             }
             
             .nav-text {
-                transition: all 0.3s ease;
+                transition: all var(--transition-normal);
             }
             
             &:hover {
-                background-color: rgba(0, 123, 255, 0.1);
-                color: var(--accent-color);
+                background: linear-gradient(135deg, var(--primary-50), rgba(56, 189, 248, 0.05));
+                color: var(--primary-700);
                 transform: translateX(4px);
                 
                 &::before {
@@ -179,28 +197,30 @@
                 }
                 
                 svg {
-                    transform: scale(1.1);
+                    transform: scale(1.1) rotate(5deg);
+                    color: var(--primary-600);
                 }
             }
             
             &.active {
-                background-color: var(--accent-color);
+                background: linear-gradient(135deg, var(--primary-400), var(--accent-400));
                 color: white;
                 transform: translateX(4px);
-                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+                box-shadow: var(--shadow-accent);
                 
                 &::before {
                     width: 4px;
-                    background-color: white;
+                    background: linear-gradient(135deg, white, rgba(255, 255, 255, 0.8));
                 }
                 
                 svg {
                     transform: scale(1.1);
+                    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
                 }
                 
                 &:hover {
-                    background-color: var(--accent-hover);
-                    transform: translateX(6px);
+                    background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+                    transform: translateX(6px) scale(1.02);
                 }
             }
         }
@@ -210,7 +230,8 @@
 /* === 響應式設計 === */
 @media (#{$mediaMax1040}) {
     .sidebar {
-        width: 80px;
+        min-width: 80px;
+        max-width: 80px;
         padding: var(--spacing-lg) var(--spacing-sm);
         
         h1 {
@@ -251,14 +272,21 @@
 
 @media (#{$mediaMax767}) {
     .sidebar {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
         height: auto;
+        max-height: 80px;
         flex-direction: row;
         justify-content: center;
         align-items: center;
         border-right: none;
-        border-bottom: 1px solid var(--border-color);
+        border-top: 1px solid var(--border-color);
         padding: var(--spacing-md) var(--spacing-sm);
+        z-index: 1001;
         
         h1 {
             display: none;
@@ -283,15 +311,15 @@
                     gap: var(--spacing-xs);
                     padding: var(--spacing-sm);
                     border-radius: var(--border-radius-sm);
-                    min-height: 60px;
+                    min-height: 50px;
                     
                     svg {
-                        width: 20px;
-                        height: 20px;
+                        width: 18px;
+                        height: 18px;
                     }
                     
                     .nav-text {
-                        font-size: 0.75rem;
+                        font-size: 0.7rem;
                         text-align: center;
                     }
                     
