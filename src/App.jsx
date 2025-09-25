@@ -80,8 +80,8 @@ export default function App() {
         };
         
         fetchData();
-        const intervalId = setInterval(fetchData, 15000); // 每30秒更新
-        return () => clearInterval(intervalId);
+        // const intervalId = setInterval(fetchData, 15000); // 每30秒更新
+        // return () => clearInterval(intervalId);
     }, [watchlist]);
 
     // 保存觀察清單到 localStorage
