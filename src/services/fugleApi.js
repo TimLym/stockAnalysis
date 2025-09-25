@@ -53,6 +53,12 @@ class FugleApiClient {
         return await this.makeRequest(`/intraday/quote/${stockCode}`, {});
     }
 
+    // 獲取股票基本資料
+    async getTicker(symbol) {
+        const stockCode = symbol.replace('.TW', '');
+        return await this.makeRequest(`/intraday/ticker/${stockCode}`, {});
+    }
+
     // 獲取當日分K線數據（盤中行情）
     async getIntradayCandles(symbol, timeframe = '1') {
         const stockCode = symbol.replace('.TW', '');
@@ -151,24 +157,34 @@ export const fugleApi = {
             for (const symbol of twSymbols) {
                 try {
                     const stockCode = symbol.replace('.TW', '');
-                    const quoteData = await fugleClient.getQuote(symbol);
                     
-                    // 富果 API v1.0 直接返回數據，無需 .data 嵌套
+                    // 同時獲取 quote 和 ticker 數據
+                    const [quoteData, tickerData] = await Promise.all([
+                        fugleClient.getQuote(symbol),
+                        fugleClient.getTicker(symbol)
+                    ]);
+                    
+                    // 合併數據，ticker 包含漲跌停價格
                     if (quoteData && (quoteData.symbol || quoteData.closePrice !== undefined)) {
                         const quote = quoteData;
+                        const ticker = tickerData || {};
                         
                         quotes.push({
                             c: quote.symbol || stockCode,
-                            n: quote.name || stockCode,
+                            n: quote.name || ticker.name || stockCode,
                             z: (quote.closePrice || quote.lastPrice || 0).toFixed(2),
                             tv: quote.total?.tradeVolume || 0,
                             v: Math.floor((quote.total?.tradeVolume || 0) / 1000),
                             o: (quote.openPrice || 0).toFixed(2),
                             h: (quote.highPrice || 0).toFixed(2),
                             l: (quote.lowPrice || 0).toFixed(2),
-                            y: (quote.previousClose || 0).toFixed(2),
+                            y: (quote.previousClose || ticker.previousClose || 0).toFixed(2),
                             u: quote.change || 0,
-                            w: quote.changePercent || 0
+                            w: quote.changePercent || 0,
+                            // 新增漲跌停價格
+                            limitUpPrice: ticker.limitUpPrice || null,
+                            limitDownPrice: ticker.limitDownPrice || null,
+                            referencePrice: ticker.referencePrice || quote.previousClose || 0
                         });
                     }
                 } catch (quoteError) {
@@ -177,7 +193,7 @@ export const fugleApi = {
                 }
                 
                 // 避免請求過於頻繁
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
 
             console.log(`富果 API: 成功獲取 ${quotes.length} 檔股票報價`);
@@ -344,24 +360,34 @@ export const fugleApiSecondary = {
             for (const symbol of twSymbols) {
                 try {
                     const stockCode = symbol.replace('.TW', '');
-                    const quoteData = await fugleClientSecondary.getQuote(symbol);
                     
-                    // 富果 API v1.0 直接返回數據，無需 .data 嵌套
+                    // 同時獲取 quote 和 ticker 數據
+                    const [quoteData, tickerData] = await Promise.all([
+                        fugleClientSecondary.getQuote(symbol),
+                        fugleClientSecondary.getTicker(symbol)
+                    ]);
+                    
+                    // 合併數據，ticker 包含漲跌停價格
                     if (quoteData && (quoteData.symbol || quoteData.closePrice !== undefined)) {
                         const quote = quoteData;
+                        const ticker = tickerData || {};
                         
                         quotes.push({
                             c: quote.symbol || stockCode,
-                            n: quote.name || stockCode,
+                            n: quote.name || ticker.name || stockCode,
                             z: (quote.closePrice || quote.lastPrice || 0).toFixed(2),
                             tv: quote.total?.tradeVolume || 0,
                             v: Math.floor((quote.total?.tradeVolume || 0) / 1000),
                             o: (quote.openPrice || 0).toFixed(2),
                             h: (quote.highPrice || 0).toFixed(2),
                             l: (quote.lowPrice || 0).toFixed(2),
-                            y: (quote.previousClose || 0).toFixed(2),
+                            y: (quote.previousClose || ticker.previousClose || 0).toFixed(2),
                             u: quote.change || 0,
-                            w: quote.changePercent || 0
+                            w: quote.changePercent || 0,
+                            // 新增漲跌停價格
+                            limitUpPrice: ticker.limitUpPrice || null,
+                            limitDownPrice: ticker.limitDownPrice || null,
+                            referencePrice: ticker.referencePrice || quote.previousClose || 0
                         });
                     }
                 } catch (quoteError) {
@@ -370,7 +396,7 @@ export const fugleApiSecondary = {
                 }
                 
                 // 避免請求過於頻繁
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
 
             console.log(`富果 API（第二個 token）: 成功獲取 ${quotes.length} 檔股票報價`);
