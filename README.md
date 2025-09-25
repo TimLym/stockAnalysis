@@ -1,5 +1,5 @@
 # StockAnalysis - 台股資訊平台
-
+https://timlym.github.io/stockAnalysis/
 一個基於 React 和 SCSS 開發的現代化股票資訊應用程式，專為台灣證券市場設計。
 提供即時股價、K線圖表、繪圖工具和財經新聞等功能。
 
