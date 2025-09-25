@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChartIcon } from './Icons';
-import SimpleStockChart from './SimpleStockChart';
+import SimpleStockChartFixed from './SimpleStockChartFixed';
 import FinancialsInfo from './FinancialsInfo';
 
 const StockInfo = ({ symbol, data, onNavigateToChart }) => {
@@ -34,8 +34,8 @@ const StockInfo = ({ symbol, data, onNavigateToChart }) => {
                         className="chart-wrapper"
                         style={{
                             minHeight: '450px',
-                            height: '450px', // 固定高度
-                            overflow: 'hidden', // 防止溢出
+                            height: 'auto', // 改為自動高度
+                            overflow: 'visible', // 允許內容完整顯示
                             padding: '10px',
                             position: 'relative',
                             border: '1px solid #333',
@@ -46,10 +46,10 @@ const StockInfo = ({ symbol, data, onNavigateToChart }) => {
                             boxSizing: 'border-box' // 包含padding和border在內的寬度計算
                         }}
                     >
-                        <SimpleStockChart 
+                        <SimpleStockChartFixed 
                             symbol={symbol}
                             data={data}
-                            height={400}
+                            height={500}
                         />
                     </div>
                 </div>
