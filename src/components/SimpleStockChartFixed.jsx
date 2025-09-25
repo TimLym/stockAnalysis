@@ -394,8 +394,8 @@ const SimpleStockChartFixed = ({ symbol, height = 500 }) => {
                 caretSize: 8,
                 position: 'nearest', // 使用最近點定位
                 filter: function(tooltipItem) {
-                    // 過濾掉 null 值的 tooltip
-                    return tooltipItem.parsed.y !== null;
+                    // 只顯示股價線的 tooltip，過濾掉昨收線和 null 值
+                    return tooltipItem.datasetIndex === 0 && tooltipItem.parsed.y !== null;
                 },
                 callbacks: {
                     title: (tooltipItems) => {
@@ -426,22 +426,36 @@ const SimpleStockChartFixed = ({ symbol, height = 500 }) => {
                             const change = price - stockInfo.previousClose;
                             const changePercent = ((change / stockInfo.previousClose) * 100);
                             
-                            return [
+                            const result = [
                                 `即時股價: NT$ ${price.toFixed(2)}`,
                                 `漲跌: ${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`,
-                                `昨收: NT$ ${stockInfo.previousClose.toFixed(2)}`,
-                                stockInfo.openPrice ? `開盤: NT$ ${parseFloat(stockInfo.openPrice).toFixed(2)}` : '',
-                                stockInfo.highPrice ? `最高: NT$ ${parseFloat(stockInfo.highPrice).toFixed(2)}` : '',
-                                stockInfo.lowPrice ? `最低: NT$ ${parseFloat(stockInfo.lowPrice).toFixed(2)}` : '',
-                                stockInfo.volume ? `成交量: ${Math.floor(parseFloat(stockInfo.volume) / 1000).toLocaleString()} 張` : ''
-                            ].filter(Boolean); // 過濾空值
-                        } else if (context.datasetIndex === 1) {
-                            // 昨收線的tooltip
-                            const stockInfo = context.chart.data.stockInfo;
-                            if (!stockInfo || stockInfo.previousClose === undefined) {
-                                return '昨收盤價';
+                                `昨收: NT$ ${stockInfo.previousClose.toFixed(2)}`
+                            ];
+                            
+                            // 添加可選資訊，但確保它們存在且有效
+                            if (stockInfo.openPrice && parseFloat(stockInfo.openPrice) > 0) {
+                                result.push(`開盤: NT$ ${parseFloat(stockInfo.openPrice).toFixed(2)}`);
                             }
-                            return `昨收盤價: NT$ ${stockInfo.previousClose.toFixed(2)}`;
+                            if (stockInfo.highPrice && parseFloat(stockInfo.highPrice) > 0) {
+                                result.push(`最高: NT$ ${parseFloat(stockInfo.highPrice).toFixed(2)}`);
+                            }
+                            if (stockInfo.lowPrice && parseFloat(stockInfo.lowPrice) > 0) {
+                                result.push(`最低: NT$ ${parseFloat(stockInfo.lowPrice).toFixed(2)}`);
+                            }
+                            if (stockInfo.volume && parseFloat(stockInfo.volume) > 0) {
+                                const volumeInLots = Math.floor(parseFloat(stockInfo.volume) / 1000);
+                                if (volumeInLots > 0) {
+                                    result.push(`成交量: ${volumeInLots.toLocaleString()} 張`);
+                                }
+                            }
+                            
+                            console.log('Tooltip data:', {
+                                price,
+                                stockInfo,
+                                result
+                            });
+                            
+                            return result;
                         }
                         return '';
                     }
@@ -558,7 +572,7 @@ const SimpleStockChartFixed = ({ symbol, height = 500 }) => {
                             <div>最低: <span style={{ color: '#22c55e' }}>NT$ {parseFloat(chartData.stockInfo.lowPrice).toFixed(2)}</span></div>
                         )}
                         {chartData.stockInfo.volume && (
-                            <div>成交量: <span style={{ color: 'white' }}>{Math.floor(parseFloat(chartData.stockInfo.volume) / 1000).toLocaleString()} 張</span></div>
+                            <div>成交量: <span style={{ color: 'white' }}>{chartData.stockInfo.volume} 張</span></div>
                         )}
                     </div>
                 </div>
