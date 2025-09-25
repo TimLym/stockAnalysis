@@ -2,6 +2,39 @@ import React, { useState, useEffect } from 'react';
 import CandlestickChart from './CandlestickChart';
 import { stockApi } from '../services/api';
 
+// 輔助函數：獲取時間框架的分鐘間隔
+const getTimeFrameInterval = (timeframe) => {
+    const intervals = {
+        '5m': 5,
+        '15m': 15,
+        '30m': 30,
+        'H': 60,
+        'D': 24 * 60,
+        'W': 7 * 24 * 60,
+        'M': 30 * 24 * 60
+    };
+    return intervals[timeframe] || 5;
+};
+
+// 輔助函數：判斷是否需要創建新K棒
+const shouldCreateNewKBar = (lastKBarTime, currentTime, intervalMinutes) => {
+    const timeDiff = (currentTime - lastKBarTime) / (1000 * 60); // 分鐘差
+    return timeDiff >= intervalMinutes;
+};
+
+// 輔助函數：創建新K棒
+const createNewKBar = (currentTime, price, timeframe) => {
+    return {
+        x: currentTime,
+        timestamp: currentTime.getTime(),
+        o: price, // 開盤價為當前價
+        h: price, // 最高價為當前價
+        l: price, // 最低價為當前價
+        c: price, // 收盤價為當前價
+        v: 0 // 成交量暫設為0
+    };
+};
+
 const CustomStockChart = ({ 
     symbol, 
     height = 400, 
@@ -112,12 +145,53 @@ const CustomStockChart = ({
             
             try {
                 console.log(`開始獲取 ${symbol} 的 ${timeframe} K 線數據，時間範圍: ${timeRange} 天...`);
-                const data = await stockApi.getHistoricalData(symbol, timeRange, timeframe);
+                
+                // 同時獲取K線數據和交易明細
+                const [data, tradeData] = await Promise.all([
+                    stockApi.getHistoricalData(symbol, timeRange, timeframe),
+                    stockApi.getIntradayTrades(symbol, 100) // 獲取最新交易明細
+                ]);
                 
                 if (data && data.length > 0) {
-                    setKlineData(data);
-                    setRetryCount(0); // 成功後重置重試計數
-                    console.log(`成功獲取 ${data.length} 筆 ${timeframe} 數據`);
+                    let finalData = [...data];
+                    
+                    // 如果有交易數據，更新當前K棒
+                    if (tradeData && tradeData.length > 0) {
+                        const latestTrade = tradeData[0];
+                        const now = new Date();
+                        const today = now.toISOString().split('T')[0];
+                        
+                        // 獲取最後一根K棒
+                        const lastKBar = finalData[finalData.length - 1];
+                        const lastKBarDate = new Date(lastKBar.x || lastKBar.timestamp);
+                        const lastKBarDateStr = lastKBarDate.toISOString().split('T')[0];
+                        
+                        if (lastKBarDateStr === today) {
+                            // 更新今日最後一根K棒
+                            finalData[finalData.length - 1] = {
+                                ...lastKBar,
+                                c: latestTrade.price, // 更新收盤價為最新成交價
+                                h: Math.max(lastKBar.h, latestTrade.price), // 更新最高價
+                                l: Math.min(lastKBar.l, latestTrade.price), // 更新最低價
+                                v: lastKBar.v // 保持原成交量
+                            };
+                            console.log(`更新當日K棒: 最新價格=${latestTrade.price}`);
+                        } else if (timeframe === '5m' || timeframe === '15m' || timeframe === '30m' || timeframe === 'H') {
+                            // 對於分鐘級K線，如果最後一根K棒不是當前時間段，創建新K棒
+                            const currentTimeFrame = getTimeFrameInterval(timeframe);
+                            const shouldCreateNew = shouldCreateNewKBar(lastKBarDate, now, currentTimeFrame);
+                            
+                            if (shouldCreateNew) {
+                                const newKBar = createNewKBar(now, latestTrade.price, timeframe);
+                                finalData.push(newKBar);
+                                console.log(`創建新的${timeframe}K棒: 價格=${latestTrade.price}`);
+                            }
+                        }
+                    }
+                    
+                    setKlineData(finalData);
+                    setRetryCount(0);
+                    console.log(`成功獲取並更新 ${finalData.length} 筆 ${timeframe} 數據`);
                 } else {
                     throw new Error('沒有收到有效數據');
                 }
@@ -132,6 +206,25 @@ const CustomStockChart = ({
         };
 
         fetchKlineData();
+        
+        // 設定定時更新 - 盤中時間更頻繁更新，盤後較少更新
+        const now = new Date();
+        const hour = now.getHours();
+        const isMarketHours = (hour >= 9 && hour < 14); // 09:00-13:30 為盤中時間
+
+        // 盤中時間：15秒更新一次，盤後：5分鐘更新一次
+        const updateInterval = isMarketHours ? 15000 : 300000;
+        
+        const intervalId = setInterval(() => {
+            console.log(`定時更新 ${symbol} 的圖表數據...`);
+            fetchKlineData();
+        }, updateInterval);
+
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
     }, [symbol, timeRange, timeframe]);
 
     const handleTimeRangeChange = (days) => {
