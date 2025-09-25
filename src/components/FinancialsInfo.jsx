@@ -47,8 +47,8 @@ const FinancialsInfo = ({ data }) => {
         { label: '最高價', value: data.h ? parseFloat(data.h).toFixed(2) : '--' },
         { label: '最低價', value: data.l ? parseFloat(data.l).toFixed(2) : '--' },
         { label: '昨收價', value: data.y ? parseFloat(data.y).toFixed(2) : '--' },
-        { label: '成交量', value: formatNumber(data.v) },
-        { label: '累積成交量', value: formatNumber(data.tv) }
+        // { label: '成交量', value: formatNumber(data.v) },
+        { label: '累積成交量', value: `${formatNumber(data.tv)} 張` }
     ];
     
     return (
