@@ -53,13 +53,29 @@ class FugleApiClient {
         return await this.makeRequest(`/intraday/quote/${stockCode}`, {});
     }
 
+    // 獲取當日分K線數據（盤中行情）
+    async getIntradayCandles(symbol, timeframe = '1') {
+        const stockCode = symbol.replace('.TW', '');
+        
+        const params = {
+            timeframe: timeframe,  // 富果API: 1, 3, 5, 10, 15, 30, 60
+            sort: 'asc'           // 升序排列
+        };
+        
+        return await this.makeRequest(`/intraday/candles/${stockCode}`, params);
+    }
+
     // 獲取歷史K線數據
     async getHistoricalCandles(symbol, days = 30, timeframe = '1D') {
         const stockCode = symbol.replace('.TW', '');
         
         // 富果API時間框架映射
         const timeframeMap = {
+            '1m': '1',      // 1分K
+            '3m': '3',      // 3分K
             '5m': '5',      // 5分K
+            '10m': '10',    // 10分K
+            '15m': '15',    // 15分K
             '30m': '30',    // 30分K
             '60m': '60',    // 60分K (1小時)
             '1D': 'D',      // 日K
@@ -216,6 +232,41 @@ export const fugleApi = {
         }
     },
 
+    // 獲取當日分K線數據（使用盤中行情）
+    getIntradayCandles: async (symbol, timeframe = '1') => {
+        try {
+            const stockCode = symbol.replace('.TW', '');
+            console.log(`使用富果 API 獲取 ${stockCode} 的當日 ${timeframe} 分K數據...`);
+
+            const candleData = await fugleClient.getIntradayCandles(symbol, timeframe);
+
+            if (!candleData || !candleData.data || !Array.isArray(candleData.data)) {
+                throw new Error('富果 API 返回的當日分K數據格式不正確');
+            }
+
+            // 轉換為標準格式
+            const klineData = candleData.data.map(candle => ({
+                x: new Date(candle.date),
+                o: parseFloat(candle.open || 0),
+                h: parseFloat(candle.high || 0), 
+                l: parseFloat(candle.low || 0),
+                c: parseFloat(candle.close || 0),
+                v: parseInt(candle.volume || 0),
+                timestamp: candle.date
+            }));
+            
+            // 升序排列
+            klineData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            console.log(`富果 API: 成功獲取 ${klineData.length} 筆當日 ${timeframe} 分K數據`);
+            return klineData;
+
+        } catch (error) {
+            console.error(`富果 API 當日 ${timeframe} 分K數據獲取失敗:`, error);
+            throw error;
+        }
+    },
+
     // 獲取公司資訊
     getCompanyInfo: async (symbol) => {
         try {
@@ -223,6 +274,54 @@ export const fugleApi = {
             return companyData;
         } catch (error) {
             console.error('富果 API 公司資訊獲取失敗:', error);
+            throw error;
+        }
+    },
+    
+    // 獲取日內交易明細
+    getIntradayTrades: async (symbol, limit = 1000, offset = 0) => {
+        const stockCode = symbol.replace('.TW', '');
+        
+        try {
+            console.log(`使用富果 API 獲取 ${stockCode} 的日內交易明細...`);
+            
+            const params = new URLSearchParams({
+                limit: limit.toString(),
+                offset: offset.toString(),
+                sort: 'desc' // 降冪排序，最新的在前面
+            });
+            
+            const response = await fetch(`${FUGLE_BASE_URL}/intraday/trades/${stockCode}?${params}`, {
+                headers: {
+                    'X-API-KEY': FUGLE_API_TOKEN
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`富果 API 錯誤: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data && data.data && Array.isArray(data.data)) {
+                // 轉換格式為標準格式
+                const trades = data.data.map(trade => ({
+                    price: trade.price,
+                    volume: trade.size || trade.volume,
+                    time: new Date(trade.time / 1000), // 轉換微秒時間戳為毫秒
+                    timestamp: trade.time / 1000,
+                    bid: trade.bid,
+                    ask: trade.ask,
+                    serial: trade.serial
+                }));
+                
+                console.log(`富果 API: 成功獲取 ${trades.length} 筆交易明細`);
+                return trades;
+            }
+            
+            return [];
+        } catch (error) {
+            console.error('富果 API 獲取交易明細失敗:', error);
             throw error;
         }
     }
@@ -333,6 +432,53 @@ export const fugleApiSecondary = {
             return companyData;
         } catch (error) {
             console.error('富果 API（第二個 token）公司資訊獲取失敗:', error);
+            throw error;
+        }
+    },
+    
+    // 獲取日內交易明細
+    getIntradayTrades: async (symbol, limit = 1000, offset = 0) => {
+        const stockCode = symbol.replace('.TW', '');
+        
+        try {
+            console.log(`使用富果 API（第二個 token）獲取 ${stockCode} 的日內交易明細...`);
+            
+            const params = new URLSearchParams({
+                limit: limit.toString(),
+                offset: offset.toString(),
+                sort: 'desc'
+            });
+            
+            const response = await fetch(`${FUGLE_BASE_URL}/intraday/trades/${stockCode}?${params}`, {
+                headers: {
+                    'X-API-KEY': FUGLE_API_TOKEN_SEC
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`富果 API 錯誤: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data && data.data && Array.isArray(data.data)) {
+                const trades = data.data.map(trade => ({
+                    price: trade.price,
+                    volume: trade.size || trade.volume,
+                    time: new Date(trade.time / 1000),
+                    timestamp: trade.time / 1000,
+                    bid: trade.bid,
+                    ask: trade.ask,
+                    serial: trade.serial
+                }));
+                
+                console.log(`富果 API（第二個 token）: 成功獲取 ${trades.length} 筆交易明細`);
+                return trades;
+            }
+            
+            return [];
+        } catch (error) {
+            console.error('富果 API（第二個 token）獲取交易明細失敗:', error);
             throw error;
         }
     }

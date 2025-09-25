@@ -247,6 +247,37 @@ export const stockApi = {
         // 方法 4: 使用模擬數據作為備用方案
         console.warn('使用模擬數據作為即時報價的備用方案');
         return generateMockQuoteData(twSymbols);
+    },
+    
+    // 獲取日內交易明細 - 優先使用富果 API
+    getIntradayTrades: async (symbol, limit = 500) => {
+        const stockCode = symbol.replace('.TW', '');
+        console.log(`正在獲取 ${stockCode} 的日內交易明細...`);
+        
+        // 方法 1: 富果 API
+        try {
+            const trades = await fugleApi.getIntradayTrades(symbol, limit);
+            if (trades && trades.length > 0) {
+                console.log(`富果 API: 成功獲取 ${trades.length} 筆交易明細`);
+                return trades;
+            }
+        } catch (fugleError) {
+            console.warn('富果 API 交易明細獲取失敗，嘗試第二個 token:', fugleError.message);
+        }
+        
+        // 方法 2: 富果 API 第二個 token - 備用方案
+        try {
+            const tradesSecondary = await fugleApiSecondary.getIntradayTrades(symbol, limit);
+            if (tradesSecondary && tradesSecondary.length > 0) {
+                console.log(`富果 API（第二個 token）: 成功獲取 ${tradesSecondary.length} 筆交易明細`);
+                return tradesSecondary;
+            }
+        } catch (fugleErrorSecondary) {
+            console.warn('富果 API（第二個 token）交易明細獲取失敗:', fugleErrorSecondary.message);
+        }
+        
+        console.warn('所有日內交易 API 都失敗，返回空數據');
+        return [];
     }
 };
 
