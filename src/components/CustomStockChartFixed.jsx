@@ -48,9 +48,9 @@ const CustomStockChart = ({
     const getInitialTimeRange = (tf) => {
         switch (tf) {
             case '5m':
-                return 1; // 5分K：當日數據
+                return 7; // 5分K：7天數據（包含歷史+當日）
             case '30m':
-                return 7; // 30分K：7天數據
+                return 14; // 30分K：14天數據（包含歷史+當日）
             case '1D':
                 return 90; // 日K：90天數據（約3個月）
             case '1W':

@@ -451,6 +451,41 @@ export const fugleApiSecondary = {
         }
     },
 
+    // 獲取當日分K線數據（使用盤中行情）- 第二個token版本
+    getIntradayCandles: async (symbol, timeframe = '1') => {
+        try {
+            const stockCode = symbol.replace('.TW', '');
+            console.log(`使用富果 API（第二個 token）獲取 ${stockCode} 的當日 ${timeframe} 分K數據...`);
+
+            const candleData = await fugleClientSecondary.getIntradayCandles(symbol, timeframe);
+
+            if (!candleData || !candleData.data || !Array.isArray(candleData.data)) {
+                throw new Error('富果 API 返回的當日分K數據格式不正確');
+            }
+
+            // 轉換為標準格式
+            const klineData = candleData.data.map(candle => ({
+                x: new Date(candle.date),
+                o: parseFloat(candle.open || 0),
+                h: parseFloat(candle.high || 0), 
+                l: parseFloat(candle.low || 0),
+                c: parseFloat(candle.close || 0),
+                v: parseInt(candle.volume || 0),
+                timestamp: candle.date
+            }));
+            
+            // 升序排列
+            klineData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            console.log(`富果 API（第二個 token）: 成功獲取 ${klineData.length} 筆當日 ${timeframe} 分K數據`);
+            return klineData;
+
+        } catch (error) {
+            console.error(`富果 API（第二個 token）當日 ${timeframe} 分K數據獲取失敗:`, error);
+            throw error;
+        }
+    },
+
     // 獲取公司資訊
     getCompanyInfo: async (symbol) => {
         try {

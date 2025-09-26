@@ -92,10 +92,94 @@ export const gnewsApi = {
 
 // 股票數據 API 服務 - 優先使用富果 API
 export const stockApi = {
-    // 獲取股票歷史數據 - 支援多時間框架
+    // 獲取股票歷史數據 - 支援多時間框架，分K線結合歷史+即時數據
     getHistoricalData: async (symbol, days = 30, timeframe = 'D') => {
         const stockCode = symbol.replace('.TW', '');
         console.log(`正在獲取 ${stockCode} 的 ${timeframe} 歷史數據，請求天數: ${days}`);
+        
+        // 判斷是否為分K線
+        const isIntradayTimeframe = ['5m', '30m', '1m', '3m', '10m', '15m', '60m'].includes(timeframe);
+        
+        if (isIntradayTimeframe) {
+            // 對於分K線，先獲取歷史數據，再嘗試獲取當日即時數據
+            console.log(`分K線模式: 獲取歷史數據 + 當日即時數據`);
+            
+            let historicalData = [];
+            let intradayData = [];
+            
+            // 步驟1: 獲取歷史數據
+            try {
+                const fugleHistorical = await fugleApi.getHistoricalData(symbol, days, timeframe);
+                if (fugleHistorical && fugleHistorical.length > 0) {
+                    historicalData = fugleHistorical;
+                    console.log(`富果歷史API: 成功獲取 ${historicalData.length} 筆歷史 ${timeframe} 數據`);
+                }
+            } catch (error) {
+                console.warn('富果歷史API失敗，嘗試第二個token:', error.message);
+                try {
+                    const fugleHistoricalSecondary = await fugleApiSecondary.getHistoricalData(symbol, days, timeframe);
+                    if (fugleHistoricalSecondary && fugleHistoricalSecondary.length > 0) {
+                        historicalData = fugleHistoricalSecondary;
+                        console.log(`富果歷史API（第二個token）: 成功獲取 ${historicalData.length} 筆歷史 ${timeframe} 數據`);
+                    }
+                } catch (secondaryError) {
+                    console.warn('所有歷史API都失敗:', secondaryError.message);
+                }
+            }
+            
+            // 步驟2: 獲取當日即時數據
+            const fugleTimeframeMap = {
+                '1m': '1', '3m': '3', '5m': '5', '10m': '10',
+                '15m': '15', '30m': '30', '60m': '60'
+            };
+            const fugleTimeframe = fugleTimeframeMap[timeframe] || '5';
+            
+            try {
+                const fugleIntraday = await fugleApi.getIntradayCandles(symbol, fugleTimeframe);
+                if (fugleIntraday && fugleIntraday.length > 0) {
+                    intradayData = fugleIntraday;
+                    console.log(`富果盤中API: 成功獲取 ${intradayData.length} 筆當日 ${timeframe} 數據`);
+                }
+            } catch (error) {
+                console.warn('富果盤中API失敗，嘗試第二個token:', error.message);
+                try {
+                    const fugleIntradaySecondary = await fugleApiSecondary.getIntradayCandles(symbol, fugleTimeframe);
+                    if (fugleIntradaySecondary && fugleIntradaySecondary.length > 0) {
+                        intradayData = fugleIntradaySecondary;
+                        console.log(`富果盤中API（第二個token）: 成功獲取 ${intradayData.length} 筆當日 ${timeframe} 數據`);
+                    }
+                } catch (secondaryError) {
+                    console.warn('所有盤中API都失敗:', secondaryError.message);
+                }
+            }
+            
+            // 步驟3: 合併歷史數據和當日數據
+            let combinedData = [];
+            
+            if (historicalData.length > 0) {
+                combinedData = [...historicalData];
+            }
+            
+            if (intradayData.length > 0) {
+                const today = new Date().toDateString();
+                
+                // 過濾掉歷史數據中今天的數據，避免重複
+                combinedData = combinedData.filter(item => {
+                    const itemDate = new Date(item.x || item.timestamp).toDateString();
+                    return itemDate !== today;
+                });
+                
+                // 添加當日即時數據
+                combinedData = [...combinedData, ...intradayData];
+            }
+            
+            if (combinedData.length > 0) {
+                // 按時間排序
+                combinedData.sort((a, b) => new Date(a.x || a.timestamp) - new Date(b.x || b.timestamp));
+                console.log(`合併完成: ${combinedData.length} 筆 ${timeframe} 數據（歷史: ${historicalData.length}, 當日: ${intradayData.length}）`);
+                return combinedData;
+            }
+        }
         
         // 方法 1: 富果 API（支援 5分K、30分K、日K、週K、月K）
         try {
